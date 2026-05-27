@@ -12,9 +12,9 @@ from schemas.analysis_schema import (ResumeAnalysisSchema)
 from pydantic import ValidationError
 
 
-load_dotenv(override=True)
+load_dotenv(override=True, dotenv_path="backend/.env")
 
-PROVIDER=os.getenv("PROVIDER", "HUGGINGFACE")
+PROVIDER=os.getenv("PROVIDER", "OPENROUTER")
 
 try:
     API_KEY = os.getenv(provider_config[PROVIDER]["API_KEY"])

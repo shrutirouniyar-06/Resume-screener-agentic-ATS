@@ -5,7 +5,7 @@ import './SettingsPage.css';
 const MODELS = [
   { id: 'mistralai/Mistral-7B-Instruct-v0.3',   label: 'Mistral 7B Instruct v0.3',   note: 'Recommended · fast' },
   { id: 'mistralai/Mixtral-8x7B-Instruct-v0.1', label: 'Mixtral 8x7B Instruct',       note: 'Larger · slower · more accurate' },
-  { id: 'meta-llama/Meta-Llama-3-8B-Instruct',  label: 'Llama 3 8B Instruct',         note: 'Meta · balanced' },
+  { id: 'meta-llama/llama-3-8b-instruct',       label: 'Llama 3 8B Instruct',         note: 'Meta · balanced' },
   { id: 'Qwen/Qwen2.5-72B-Instruct',            label: 'Qwen 2.5 72B Instruct',       note: 'Large · highest quality' },
 ];
 

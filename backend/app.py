@@ -3,7 +3,7 @@ from flask import Flask
 from flask_cors import CORS
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True, dotenv_path=".env")
 
 from models.store import seed_demo
 from routes.roles import roles_bp

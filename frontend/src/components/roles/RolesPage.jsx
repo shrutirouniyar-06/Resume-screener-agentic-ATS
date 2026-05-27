@@ -21,8 +21,8 @@ export default function RolesPage() {
     description: "",
   });
   const [saving, setSaving] = useState(false);
-
   const [generating, setGenerating] = useState(false);
+  const [validationError, setValidationError] = useState("");
 
   const load = () =>
     getRoles().then((r) => {
@@ -33,14 +33,53 @@ export default function RolesPage() {
     load();
   }, []);
 
+  const validateForm = () => {
+    setValidationError("");
+
+    if (!form.title.trim()) {
+      setValidationError("Role title is required");
+      return false;
+    }
+
+    if (form.title.trim().length < 3) {
+      setValidationError("Role title must be at least 3 characters");
+      return false;
+    }
+
+    if (form.title.trim().length > 100) {
+      setValidationError("Role title must be 100 characters or less");
+      return false;
+    }
+
+    if (form.department.trim().length > 50) {
+      setValidationError("Department must be 50 characters or less");
+      return false;
+    }
+
+    if (form.description.trim().length > 500) {
+      setValidationError("Description must be 500 characters or less");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
+
     setSaving(true);
-    await createRole(form);
-    setForm({ title: "", department: "", description: "" });
-    setShowForm(false);
-    setSaving(false);
-    load();
+    try {
+      await createRole(form);
+      setForm({ title: "", department: "", description: "" });
+      setShowForm(false);
+      load();
+    } catch (err) {
+      setValidationError(err.response?.data?.error || "Failed to create role");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAIGenerate = async () => {
@@ -123,6 +162,11 @@ export default function RolesPage() {
         {showForm && (
           <div className="role-form-card">
             <div className="form-title">Create new role</div>
+            {validationError && (
+              <div className="form-error">
+                <span>{validationError}</span>
+              </div>
+            )}
             <form onSubmit={handleCreate} className="role-form">
               <div className="form-row">
                 <label>Role title</label>

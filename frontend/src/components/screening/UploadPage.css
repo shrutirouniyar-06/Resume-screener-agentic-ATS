@@ -93,16 +93,40 @@
   color: var(--text-color);
 }
 
-.file-name {
+.file-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.file-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.file-size {
+  font-size: 11px;
+  color: var(--light-text);
+}
+
 .file-status {
   display: flex;
   align-items: center;
+}
+
+.size-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(226, 75, 74, 0.1);
+  border: 0.5px solid rgba(226, 75, 74, 0.3);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #E24B4A;
 }
 
 .status-pending {
@@ -115,11 +139,100 @@
   color: #E24B4A;
 }
 
+/* Progress */
+
+.screening-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progress-text {
+  font-size: 13px;
+  color: var(--light-text);
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--hover-bg);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #185FA5, #1D9E75);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
 /* Actions */
 
 .upload-actions {
   display: flex;
   gap: 8px;
+}
+
+/* Completion Message */
+
+.completion-message {
+  padding: 12px 14px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.completion-message.success {
+  background: rgba(29, 158, 117, 0.1);
+  border: 0.5px solid rgba(29, 158, 117, 0.3);
+}
+
+.completion-message.with-errors {
+  background: rgba(226, 75, 74, 0.1);
+  border: 0.5px solid rgba(226, 75, 74, 0.3);
+}
+
+.completion-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.completion-details {
+  font-size: 12px;
+  color: var(--light-text);
+  padding-left: 24px;
+}
+
+.completion-action {
+  padding-left: 24px;
+  margin-top: 10px;
+}
+
+.navigate-text {
+  font-size: 12px;
+  color: var(--light-text);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #185FA5;
+  font-size: 13px;
+  padding: 6px 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.btn-link:hover {
+  color: #0d3a6a;
 }
 
 /* Spinner */
