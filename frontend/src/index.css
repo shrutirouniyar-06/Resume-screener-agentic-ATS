@@ -3,6 +3,10 @@
   --text-color: #1a1a1a;
   --card-bg: #ffffff;
   --border-color: #d0cfc8;
+  --light-text: #666;
+  --muted-text: #999;
+  --hover-bg: #f0f0e8;
+  --btn-border: #ccc;
 }
 
 [data-theme='dark'] {
@@ -10,6 +14,10 @@
   --text-color: #f5f5f5;
   --card-bg: #1e1e1e;
   --border-color: #333;
+  --light-text: #bbb;
+  --muted-text: #888;
+  --hover-bg: #2a2a2a;
+  --btn-border: #444;
 }
 *,
 *::before,

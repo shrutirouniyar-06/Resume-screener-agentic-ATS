@@ -123,6 +123,7 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;
+  align-items: center;
 }
 
 /* Candidate Rows */
@@ -136,6 +137,13 @@
   cursor: pointer;
   transition: all 0.15s ease;
   position: relative;
+}
+
+.candidate-row > :last-child {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 6px 0;
 }
 
 .candidate-row::before {
