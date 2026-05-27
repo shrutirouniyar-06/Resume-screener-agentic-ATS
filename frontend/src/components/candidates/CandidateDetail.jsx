@@ -193,7 +193,43 @@ export default function CandidateDetail({ candidate: c }) {
 
           <div className="detail-sec-title">
             Feedback for candidate
+            {!!c.malware_detected && (
+              <span style={{ color:'#DC2626', marginLeft:'12px', fontSize:'12px', fontWeight:'600' }}>
+                ⚠️ MALICIOUS ACTIVITY DETECTED
+              </span>
+            )}
           </div>
+
+          {!!c.malware_detected && c.malware_feedback && (
+            <div style={{
+              backgroundColor:'#FEE2E2',
+              border:'1px solid #FCA5A5',
+              borderRadius:'6px',
+              padding:'12px',
+              marginBottom:'16px',
+              color:'#DC2626',
+              fontSize:'13px',
+              lineHeight:'1.6'
+            }}>
+              <div style={{ fontWeight:'600', marginBottom:'8px' }}>
+                🚨 {c.malware_feedback.what_is_this}
+              </div>
+              <div style={{ marginBottom:'8px' }}>
+                <strong>Why this is dangerous:</strong>
+                <ul style={{ marginTop:'4px', marginLeft:'16px', marginBottom:0 }}>
+                  {c.malware_feedback.why_malicious?.map((reason, i) => (
+                    <li key={i} style={{ marginBottom:'4px' }}>{reason}</li>
+                  ))}
+                </ul>
+              </div>
+              <div style={{ marginBottom:'8px' }}>
+                <strong>Attack method:</strong> {c.malware_feedback.attack_method}
+              </div>
+              <div style={{ marginTop:'8px', padding:'8px', backgroundColor:'#FECACA', borderRadius:'4px', fontSize:'12px' }}>
+                <strong>Security Impact:</strong> {c.malware_feedback.security_impact}
+              </div>
+            </div>
+          )}
 
           <div className="rejection-reason">
             {rejection.reason}

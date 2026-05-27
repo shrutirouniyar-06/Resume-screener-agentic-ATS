@@ -19,9 +19,13 @@ from services.safety import (
     run_comprehensive_safety_checks,
     filter_toxic_output,
     audit_log,
+    security_log,
 )
 import os
+import logging
+from datetime import datetime
 
+logger = logging.getLogger(__name__)
 screen_bp = Blueprint("screen", __name__)
 
 
@@ -165,19 +169,47 @@ def screen_resume():
 
         # SAFETY: Detect prompt injection attempts
         is_injection, pattern = detect_prompt_injection(resume_text)
+        malware_detected = False
+        malware_feedback = None
+
         if is_injection:
-            return jsonify({
-                "error": f"Suspicious content detected in resume: {pattern}",
-                "code": "INJECTION_DETECTED"
-            }), 400
+            malware_detected = True
+            # Log the security incident
+            incident = security_log.log_injection_attempt(
+                pattern_detected=pattern,
+                filename=file.filename,
+                resume_snippet=resume_text[:200]
+            )
+
+            # Educational feedback explaining the malware/attack
+            malware_feedback = {
+                "what_is_this": "Prompt Injection Attack (Malware Practice)",
+                "why_malicious": [
+                    "This resume contains hidden instructions attempting to bypass the hiring system's safety mechanisms",
+                    "It tries to manipulate the AI screening process to artificially approve an unqualified candidate",
+                    "This is a form of system manipulation and fraud in the recruitment process",
+                    "Such attacks undermine fair hiring practices and compromise system integrity"
+                ],
+                "attack_method": f"Detected pattern: '{pattern}'",
+                "how_it_works": "The resume includes embedded commands disguised within normal resume content to trick the AI into ignoring qualification requirements or artificially inflating scores",
+                "consequences": [
+                    "Hiring unqualified candidates due to system manipulation",
+                    "Loss of trust in the recruitment process",
+                    "Potential legal liability for fraudulent hiring practices",
+                    "Compromise of fair and merit-based evaluation"
+                ],
+                "security_impact": "CRITICAL - This is a direct attempt to compromise the integrity of the hiring system"
+            }
+
+            # Continue processing but mark as malware - don't block
+            logger.warning(f"Malware detected in resume {file.filename}: {pattern}")
 
         # PII scrubbing
 
         safe_resume_text = scrub_pii(resume_text)
 
-        print("\n--- ANONYMIZED RESUME ---\n")
-
-        print(safe_resume_text[:1000])
+        # print("\n--- ANONYMIZED RESUME ---\n")
+        # print(safe_resume_text[:1000])
 
     except ValueError as e:
 
@@ -206,7 +238,7 @@ def screen_resume():
 
     # If critical safety issues, flag for review
     if not safety_report["all_passed"]:
-        print(f"\n⚠️ SAFETY CHECKS FAILED:\n{safety_report}")
+        logger.warning("Safety checks failed - candidate flagged for review")
 
     # -------------------------
     # 4. Score
@@ -343,6 +375,11 @@ def screen_resume():
     # 7. Save Candidate
     # -------------------------
 
+    # If malware detected, prepend warning to recruiter summary
+    final_recruiter_summary = recruiter_summary
+    if malware_detected:
+        final_recruiter_summary = f"[MALWARE DETECTED] This resume contains prompt injection attack attempting to manipulate the screening system.\n\n{recruiter_summary}"
+
     candidate = save_candidate(
         {
             "name": display_name,
@@ -352,10 +389,13 @@ def screen_resume():
             "analysis": analysis,
             "score": score_breakdown,
             "status": ("Shortlisted" if shortlisted else "Rejected"),
-            "recruiter_summary": recruiter_summary,
+            "recruiter_summary": final_recruiter_summary,
             "interview_questions": interview_questions,
             "interview_profile": {},
             "rejection_feedback": rejection_feedback,
+            "uploaded_at": datetime.utcnow().isoformat() + "Z",
+            "malware_detected": malware_detected,
+            "malware_feedback": malware_feedback,
         }
     )
 
@@ -370,8 +410,11 @@ def screen_resume():
         safety_checks=safety_report["checks"]
     )
 
-    # Add safety report to response
+    # Add safety report and malware feedback to response
     candidate["safety_checks"] = safety_report
+    candidate["malware_detected"] = malware_detected
+    if malware_feedback:
+        candidate["malware_feedback"] = malware_feedback
 
     return jsonify(candidate), 201
 
@@ -382,7 +425,16 @@ def list_candidates():
     candidates = get_all_candidates()
     if role_id:
         candidates = [c for c in candidates if c.get("role_id") == role_id]
-    return jsonify(candidates)
+
+    # Clean up response - remove verbose malware_feedback but keep malware_detected as boolean
+    cleaned = []
+    for c in candidates:
+        c["malware_detected"] = bool(c.get("malware_detected"))  # Ensure it's boolean, not 0/1
+        if "malware_feedback" in c:
+            del c["malware_feedback"]  # Remove verbose feedback from list view
+        cleaned.append(c)
+
+    return jsonify(cleaned)
 
 
 @screen_bp.get("/api/candidates/<cid>")
@@ -586,3 +638,22 @@ def run_safety_check():
     )
 
     return jsonify(safety_report)
+
+
+# ============================================================================
+# SECURITY INCIDENT ENDPOINTS
+# ============================================================================
+
+@screen_bp.get("/api/security-incidents")
+def get_security_incidents():
+    """Get all security incidents (injection attempts, etc)."""
+    return jsonify({
+        "incidents": security_log.get_all_incidents(),
+        "total_incidents": len(security_log.incidents)
+    })
+
+
+@screen_bp.get("/api/security-summary")
+def get_security_summary():
+    """Get security incident summary for dashboard."""
+    return jsonify(security_log.get_incidents_summary())

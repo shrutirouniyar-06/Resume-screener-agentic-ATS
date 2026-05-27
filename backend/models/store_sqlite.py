@@ -134,12 +134,14 @@ def save_candidate(candidate: dict) -> dict:
 
     candidate_id = candidate.get("id") or new_id()
     now = now_iso()
+    uploaded_at = candidate.get("uploaded_at", now)
 
     cursor.execute("""
         INSERT OR REPLACE INTO candidates
         (id, name, filename, role_id, role_title, analysis, score, status,
-         recruiter_summary, interview_questions, rejection_feedback, interview_profile, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         recruiter_summary, interview_questions, rejection_feedback, interview_profile,
+         created_at, uploaded_at, malware_detected, malware_feedback)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         candidate_id,
         candidate["name"],
@@ -153,7 +155,10 @@ def save_candidate(candidate: dict) -> dict:
         json.dumps(candidate.get("interview_questions", [])),
         json.dumps(candidate.get("rejection_feedback")),
         json.dumps(candidate.get("interview_profile", {})),
-        now
+        now,
+        uploaded_at,
+        candidate.get("malware_detected", False),
+        json.dumps(candidate.get("malware_feedback")) if candidate.get("malware_feedback") else None
     ))
 
     conn.commit()
@@ -161,13 +166,14 @@ def save_candidate(candidate: dict) -> dict:
 
     candidate["id"] = candidate_id
     candidate["created_at"] = now
+    candidate["uploaded_at"] = uploaded_at
     return candidate
 
 def get_all_candidates() -> list:
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM candidates ORDER BY created_at DESC")
+    cursor.execute("SELECT * FROM candidates ORDER BY uploaded_at DESC")
     rows = cursor.fetchall()
     conn.close()
 
@@ -179,6 +185,8 @@ def get_all_candidates() -> list:
         candidate["interview_questions"] = json.loads(candidate["interview_questions"])
         candidate["rejection_feedback"] = json.loads(candidate["rejection_feedback"])
         candidate["interview_profile"] = json.loads(candidate["interview_profile"])
+        if candidate.get("malware_feedback"):
+            candidate["malware_feedback"] = json.loads(candidate["malware_feedback"])
         candidates.append(candidate)
 
     return candidates
@@ -198,6 +206,8 @@ def get_candidate(cid: str) -> dict | None:
         candidate["interview_questions"] = json.loads(candidate["interview_questions"])
         candidate["rejection_feedback"] = json.loads(candidate["rejection_feedback"])
         candidate["interview_profile"] = json.loads(candidate["interview_profile"])
+        if candidate.get("malware_feedback"):
+            candidate["malware_feedback"] = json.loads(candidate["malware_feedback"])
         return candidate
     return None
 

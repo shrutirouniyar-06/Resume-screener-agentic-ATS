@@ -18,10 +18,18 @@ export default function CandidatesPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [selected, setSelected] = useState(null);
+  const [hoveredMalware, setHoveredMalware] = useState(null);
 
   useEffect(() => {
     Promise.all([getCandidates(), getRoles()]).then(([c, r]) => {
-      setCandidates(c); setRoles(r); setLoading(false);
+      // Ensure malware_detected is boolean
+      const cleanedCandidates = c.map(candidate => ({
+        ...candidate,
+        malware_detected: Boolean(candidate.malware_detected)
+      }));
+      setCandidates(cleanedCandidates);
+      setRoles(r);
+      setLoading(false);
     });
   }, []);
 
@@ -63,7 +71,7 @@ export default function CandidatesPage() {
             <div>Candidate</div>
             <div>Role</div>
             <div>Match score</div>
-            <div>Skills</div>
+            <div>Matched skills</div>
             <div>Experience</div>
             <div>Status</div>
           </div>
@@ -82,20 +90,79 @@ export default function CandidatesPage() {
                     <Avatar name={c.name} bg={bg} color={fg} />
                     <div>
                       <div className="cname">{c.name}</div>
-                      <div style={{ fontSize:11, color:'#aaa' }}>{new Date(c.created_at).toLocaleDateString()}</div>
+                      <div style={{ fontSize:11, color:'#aaa' }}>
+                        {new Date(c.uploaded_at || c.created_at).toLocaleDateString()} {new Date(c.uploaded_at || c.created_at).toLocaleTimeString()}
+                      </div>
                     </div>
                     <div style={{ fontSize:12, color:'#555' }}>{c.role_title}</div>
                     <ScoreBar value={c.score?.overall ?? 0} />
                     <div className="skill-pills">
-                      {skills.map(s => <span key={s} className="skill-pill">{s}</span>)}
-                      {(c.analysis?.skills_found?.length ?? 0) > 3 && (
-                        <span className="skill-pill">+{c.analysis.skills_found.length - 3}</span>
+                      {skills.length > 0 ? (
+                        <>
+                          {skills.map(s => <span key={s} className="skill-pill">{s}</span>)}
+                          {(c.analysis?.skills_found?.length ?? 0) > 3 && (
+                            <span className="skill-pill">+{c.analysis.skills_found.length - 3}</span>
+                          )}
+                        </>
+                      ) : (
+                        <span style={{ fontSize:12, color:'#999' }}>— (no skills matched)</span>
                       )}
                     </div>
                     <div style={{ fontSize:12, color:'#888' }}>
                       {c.analysis?.years_experience != null ? `${c.analysis.years_experience} yrs` : '—'}
                     </div>
-                    <Badge status={c.status} />
+                    <div style={{ display:'flex', gap:6, alignItems:'center', justifyContent:'flex-end', position:'relative', minHeight:'34px' }}>
+                      {!!c.malware_detected ? (
+                        <div
+                          style={{
+                            fontSize:'18px',
+                            cursor:'pointer',
+                            position:'relative',
+                            display:'flex',
+                            alignItems:'center',
+                            justifyContent:'center',
+                            width:'28px',
+                            height:'28px',
+                            flexShrink:0
+                          }}
+                          onMouseEnter={() => setHoveredMalware(c.id)}
+                          onMouseLeave={() => setHoveredMalware(null)}
+                        >
+                          🚨
+                          {hoveredMalware === c.id && (
+                            <div style={{
+                              position:'absolute',
+                              bottom:'100%',
+                              right:0,
+                              marginBottom:'8px',
+                              backgroundColor:'#DC2626',
+                              color:'white',
+                              padding:'6px 10px',
+                              borderRadius:'4px',
+                              fontSize:'11px',
+                              fontWeight:'600',
+                              whiteSpace:'nowrap',
+                              zIndex:10,
+                              boxShadow:'0 2px 8px rgba(0,0,0,0.2)'
+                            }}>
+                              MALWARE DETECTED
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{ width:'34px', flexShrink:0 }} />
+                      )}
+                      <div style={{
+                        height:'34px',
+                        display:'flex',
+                        alignItems:'center',
+                        justifyContent:'center',
+                        minWidth:'90px',
+                        flexShrink:0
+                      }}>
+                        <Badge status={c.status} />
+                      </div>
+                    </div>
                   </div>
                 );
               })

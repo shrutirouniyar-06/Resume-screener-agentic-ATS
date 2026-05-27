@@ -18,15 +18,17 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 INJECTION_PATTERNS = [
-    r"ignore\s+(?:all\s+)?instructions?",
-    r"forget\s+(?:all\s+)?instructions?",
-    r"bypass\s+(?:safety|filter|restriction)",
-    r"override\s+(?:rules|restrictions|guidelines)",
-    r"execute\s+(?:command|code|prompt)",
-    r"print\s+(?:system|secret|api|key)",
-    r"show\s+(?:system|hidden|secret|prompt)",
-    r"what\s+are\s+your\s+instructions",
-    r"who\s+(?:are\s+)?you\s+(?:really)?",
+    r"ignore\s+(?:all\s+)?(?:\w+\s+)*(?:instructions?|requirements?|rules?|guidelines?|job|scoring)",
+    r"forget\s+(?:all\s+)?(?:\w+\s+)*(?:instructions?|requirements?|rules?|guidelines?|job|scoring)",
+    r"bypass\s+(?:\w+\s+)*(?:safety|filter|restriction|scoring|system|requirements?)",
+    r"override\s+(?:\w+\s+)*(?:rules|restrictions|guidelines|requirements?|scoring)",
+    r"execute\s+(?:\w+\s+)*(?:command|code|prompt|instruction|approval)",
+    r"give\s+(?:\w+\s+)*(?:approval|100|perfect|full|maximum)(?:\s+score)?",
+    r"score\s+(?:\w+\s+)*(?:this|candidate)\s+(?:100|perfect|full|maximum)",
+    r"print\s+(?:\w+\s+)*(?:system|secret|api|key|instruction|prompt)",
+    r"show\s+(?:\w+\s+)*(?:system|hidden|secret|prompt|instruction|requirements?)",
+    r"what\s+are\s+your\s+(?:instructions?|guidelines?|rules?)",
+    r"who\s+(?:are\s+)?you\s+(?:really|actually)?",
     r"you\s+are\s+(?:actually|really)\s+(?:a|an|the)",
     r"(?:^|[\s])(?:act|behave|pretend)\s+(?:as|like|that|you're)\s+(?:a\s+)?(?:attacker|hacker|jailbreak)",
     r"</?system>",
@@ -34,6 +36,12 @@ INJECTION_PATTERNS = [
     r"<!-- .{1,100} -->",
     r"\[SYSTEM\]",
     r"\[ADMIN\]",
+    r"SECURITY\s+TEST",
+    r"PLEASE\s+IGNORE",
+    r"automatic_shortlist",
+    r"shortlist_candidate",
+    r"override_scoring",
+    r"process_candidate_approval",
 ]
 
 INJECTION_COMPILED = [re.compile(p, re.IGNORECASE) for p in INJECTION_PATTERNS]
@@ -395,6 +403,61 @@ class DecisionAuditLog:
 
 # Global audit log instance
 audit_log = DecisionAuditLog()
+
+
+# ============================================================================
+# 8. SECURITY INCIDENT LOGGING
+# ============================================================================
+
+class SecurityIncidentLog:
+    """Log all security incidents for monitoring and investigation."""
+
+    def __init__(self):
+        self.incidents = []
+
+    def log_injection_attempt(
+        self,
+        pattern_detected: str,
+        filename: str,
+        resume_snippet: str = None,
+        timestamp: str = None
+    ) -> Dict[str, Any]:
+        """Log a prompt injection attempt."""
+
+        incident = {
+            "timestamp": timestamp or datetime.now().isoformat(),
+            "incident_type": "PROMPT_INJECTION",
+            "severity": "CRITICAL",
+            "pattern_detected": pattern_detected,
+            "filename": filename,
+            "resume_snippet": resume_snippet[:100] if resume_snippet else None,
+            "status": "BLOCKED",
+        }
+
+        self.incidents.append(incident)
+        logger.warning(f"SECURITY ALERT: Injection attempt detected in {filename} - Pattern: {pattern_detected}")
+
+        return incident
+
+    def get_all_incidents(self) -> List[Dict[str, Any]]:
+        """Return all security incidents."""
+        return self.incidents
+
+    def get_incidents_summary(self) -> Dict[str, Any]:
+        """Get summary of security incidents."""
+        total = len(self.incidents)
+        injection_attempts = len([i for i in self.incidents if i["incident_type"] == "PROMPT_INJECTION"])
+
+        return {
+            "total_incidents": total,
+            "injection_attempts": injection_attempts,
+            "critical_alerts": total,
+            "last_incident": self.incidents[-1]["timestamp"] if self.incidents else None,
+            "generated_at": datetime.now().isoformat(),
+        }
+
+# Global security incident log instance
+security_log = SecurityIncidentLog()
 
 
 # ============================================================================

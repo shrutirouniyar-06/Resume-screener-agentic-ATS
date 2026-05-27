@@ -354,18 +354,37 @@ adaptability
 def generate_rejection_feedback(candidate_analysis: dict, role: dict, score: int) -> dict:
     """
     Returns {reason, improvement_suggestions: [str]}
+    Feedback is grounded in actual resume gaps, not hallucinated skills.
     """
+    candidate_skills = [s.lower() for s in candidate_analysis.get('skills_found', [])]
+    required_skills = [s['name'].lower() for s in role['scoring_config']['skills']]
+
+    # Find skills that are MISSING (not in candidate's resume)
+    missing_skills = [s for s in required_skills if s.lower() not in candidate_skills]
+
+    # If all skills are present, find other gaps
+    gap_analysis = ""
+    if missing_skills:
+        gap_analysis = f"\n\nMissing skills compared to job requirements: {', '.join(missing_skills[:3])}"
+    else:
+        gap_analysis = "\n\nAll listed skills are present. Focus on experience gaps or other factors."
+
     prompt = f"""You are a compassionate HR professional. A candidate scored {score}% for the role "{role['title']}" and did not meet the threshold.
+
+CRITICAL INSTRUCTION: Only suggest improvements for skills they DON'T have. Never suggest they learn skills they already list.
 
 Candidate skills found: {', '.join(candidate_analysis.get('skills_found', []))}
 Years of experience: {candidate_analysis.get('years_experience', '?')}
-Required skills for role: {', '.join(s['name'] for s in role['scoring_config']['skills'])}
+Required skills for role: {', '.join(required_skills)}
+{gap_analysis}
 
-Write a polite, constructive response. Return ONLY JSON:
+Write a polite, constructive response focusing ONLY on genuine gaps. Return ONLY JSON:
 {{
-  "reason": "<2-sentence polite explanation>",
-  "improvement_suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"]
+  "reason": "<2-sentence polite explanation that is truthful>",
+  "improvement_suggestions": ["Only suggest skills/experience they actually lack, grounded in the role requirements"]
 }}
+
+IMPORTANT: Do NOT suggest they learn Figma, Adobe XD, or Sketch if those tools appear in their skills list. Do NOT suggest they develop user research skills if they already mention conducting interviews or usability testing.
 """
     raw = _chat([{"role": "user", "content": prompt}], max_tokens=512)
     return _extract_json(raw)

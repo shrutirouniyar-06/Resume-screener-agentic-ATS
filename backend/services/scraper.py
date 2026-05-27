@@ -76,19 +76,49 @@ def _scrape_remotive(job_title: str) -> str:
 
 def suggest_skills(job_title: str) -> list[str]:
     """
-    Scrape multiple sources and return top skills by frequency.
-    Falls back gracefully if sources are unavailable.
+    Return job-specific skills based on job title.
+    Uses role-based mapping for accuracy, falls back to scraping/generic.
     """
+    role_skills = {
+        "ux/ui designer": ["Figma", "Adobe XD", "Sketch", "User Research", "Interaction Design", "Wireframing", "Prototyping", "User Testing", "Design Systems", "Usability Testing"],
+        "ui designer": ["Figma", "Adobe XD", "Sketch", "Visual Design", "Typography", "Color Theory", "Design Systems", "CSS", "HTML", "Responsive Design"],
+        "ux designer": ["User Research", "Interaction Design", "Wireframing", "Usability Testing", "Information Architecture", "User Testing", "Prototyping", "Journey Mapping"],
+        "product manager": ["Product Strategy", "User Research", "A/B Testing", "Analytics", "Roadmapping", "Agile", "Jira", "Data Analysis", "Communication", "Stakeholder Management"],
+        "backend engineer": ["Python", "SQL", "REST API", "Microservices", "System Design", "Database Design", "Docker", "Kubernetes", "AWS", "Git"],
+        "frontend engineer": ["React", "JavaScript", "CSS", "HTML", "TypeScript", "Web Performance", "Redux", "Git", "REST API", "Responsive Design"],
+        "full stack engineer": ["React", "Node.js", "JavaScript", "SQL", "MongoDB", "AWS", "Docker", "Git", "REST API", "System Design"],
+        "data scientist": ["Python", "SQL", "Statistics", "Machine Learning", "TensorFlow", "Pandas", "Data Visualization", "Jupyter", "Linear Algebra", "SQL"],
+        "devops engineer": ["AWS", "Kubernetes", "Docker", "CI/CD", "Infrastructure as Code", "Terraform", "Jenkins", "Linux", "Git", "Monitoring"],
+        "data engineer": ["Python", "SQL", "Apache Spark", "Data Warehousing", "ETL", "AWS", "Kafka", "Git", "Data Modeling", "Airflow"],
+        "ml engineer": ["Python", "Machine Learning", "TensorFlow", "PyTorch", "SQL", "Statistics", "Deep Learning", "Model Deployment", "Docker", "AWS"],
+        "qa engineer": ["Test Automation", "Selenium", "Test Design", "SQL", "API Testing", "Performance Testing", "Jira", "Git", "Python", "Documentation"],
+        "software engineer": ["Python", "Java", "JavaScript", "System Design", "SQL", "Docker", "AWS", "Git", "REST API", "Algorithms"],
+    }
+
+    job_title_lower = job_title.lower().strip()
+
+    # Try exact match first
+    for role_key, skills in role_skills.items():
+        if role_key in job_title_lower or job_title_lower in role_key:
+            return skills
+
+    # Try partial match (substring matching)
+    for role_key, skills in role_skills.items():
+        words = role_key.split()
+        if any(word in job_title_lower for word in words):
+            return skills
+
+    # Fallback: Try scraping
     text = _scrape_remotive(job_title) + " " + _scrape_indeed(job_title)
+    if text.strip():
+        found = _extract_skills_from_text(text)
+        counts = Counter(found)
+        top_skills = [skill for skill, _ in counts.most_common(15)]
+        if top_skills:
+            return top_skills
 
-    if not text.strip():
-        # Offline fallback: return generic senior-role skills
-        return ["Python", "System Design", "SQL", "Docker", "Git", "REST API", "Agile"]
-
-    found = _extract_skills_from_text(text)
-    counts = Counter(found)
-    # Return top 15 by frequency
-    return [skill for skill, _ in counts.most_common(15)]
+    # Final fallback: return generic skills
+    return ["Python", "System Design", "SQL", "Docker", "Git", "REST API", "Agile"]
 
 
 def collect_market_text(job_title: str) -> str:

@@ -48,6 +48,9 @@ def init_db():
             rejection_feedback TEXT,
             interview_profile TEXT,
             created_at TEXT NOT NULL,
+            uploaded_at TEXT NOT NULL,
+            malware_detected BOOLEAN DEFAULT 0,
+            malware_feedback TEXT,
             FOREIGN KEY (role_id) REFERENCES roles(id)
         )
     """)
