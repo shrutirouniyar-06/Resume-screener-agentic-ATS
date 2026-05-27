@@ -169,12 +169,12 @@
   font-size: 12px;
 }
 
-.metric-label {
+.metric-item .metric-label {
   color: var(--muted-text);
   text-transform: capitalize;
 }
 
-.metric-value {
-  font-weight: 600;
+.metric-item .metric-value {
+  font-weight: 500;
   color: #185FA5;
 }
