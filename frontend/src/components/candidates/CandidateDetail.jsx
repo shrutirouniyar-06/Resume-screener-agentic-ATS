@@ -1,9 +1,29 @@
 import { ScoreRing, Badge } from '../layout/UI';
 import './CandidateDetail.css';
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 
 export default function CandidateDetail({ candidate: c }) {
   const navigate = useNavigate();
+  const [voiceProfile, setVoiceProfile] = useState(null);
+
+  useEffect(() => {
+    loadVoiceProfile();
+  }, [c.id]);
+
+  const loadVoiceProfile = async () => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/candidates/${c.id}/voice-interviews`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setVoiceProfile(data.voice_profile);
+      }
+    } catch (e) {
+      console.log("No voice profile yet");
+    }
+  };
 
   const score = c.score || {};
   const analysis = c.analysis || {};
@@ -42,6 +62,14 @@ export default function CandidateDetail({ candidate: c }) {
           label="Experience"
           color="#BA7517"
         />
+
+        {voiceProfile && (
+          <ScoreRing
+            value={voiceProfile.communication_score ?? 0}
+            label="Communication"
+            color="#D97706"
+          />
+        )}
       </div>
 
       {analysis.skills_found?.length > 0 && (
@@ -130,6 +158,33 @@ export default function CandidateDetail({ candidate: c }) {
             </button>
           </div>
 
+        </div>
+      )}
+
+      {voiceProfile && (
+        <div className="detail-section">
+          <div className="detail-sec-title">
+            Voice Interview Profile
+          </div>
+
+          <div className="voice-metrics">
+            <div className="metric-item">
+              <span className="metric-label">Clarity</span>
+              <span className="metric-value">{voiceProfile.clarity}</span>
+            </div>
+            <div className="metric-item">
+              <span className="metric-label">Confidence</span>
+              <span className="metric-value">{voiceProfile.confidence}</span>
+            </div>
+            <div className="metric-item">
+              <span className="metric-label">Relevance</span>
+              <span className="metric-value">{voiceProfile.relevance}</span>
+            </div>
+            <div className="metric-item">
+              <span className="metric-label">Speaking Pace</span>
+              <span className="metric-value">{voiceProfile.speaking_pace}</span>
+            </div>
+          </div>
         </div>
       )}
 

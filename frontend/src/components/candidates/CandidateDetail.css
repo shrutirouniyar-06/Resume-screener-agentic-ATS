@@ -151,3 +151,30 @@
   left: 0;
   color: #185FA5;
 }
+
+/* Voice Profile */
+
+.voice-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.metric-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  background: var(--hover-bg);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.metric-label {
+  color: var(--muted-text);
+  text-transform: capitalize;
+}
+
+.metric-value {
+  font-weight: 600;
+  color: #185FA5;
+}

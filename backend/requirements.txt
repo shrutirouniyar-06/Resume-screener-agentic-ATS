@@ -7,3 +7,7 @@ python-docx
 beautifulsoup4
 requests
 gunicorn
+transformers
+torch
+librosa
+soundfile

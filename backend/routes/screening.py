@@ -1,5 +1,8 @@
 from flask import Blueprint, request, jsonify
-from models.store_sqlite import get_role, save_candidate, get_all_candidates, get_candidate
+from models.store_sqlite import (
+    get_role, save_candidate, get_all_candidates, get_candidate,
+    save_voice_interview, get_voice_interviews
+)
 from services.parser import extract_text
 from services.scoring import calculate_score
 from services.privacy import scrub_pii
@@ -10,6 +13,8 @@ from services.llm import (
     generate_recruiter_summary,
     judge_and_revise,
 )
+from services.speech import transcribe_audio, analyze_communication, calculate_communication_score
+import os
 
 screen_bp = Blueprint("screen", __name__)
 
@@ -387,3 +392,105 @@ def stats():
             "avg_match_score": avg_score,
         }
     )
+
+
+# ==================== VOICE INTERVIEW ENDPOINTS ====================
+
+@screen_bp.post("/api/candidates/<cid>/voice-interview")
+def save_voice_response(cid):
+    """Record and process voice interview response"""
+
+    candidate = get_candidate(cid)
+    if not candidate:
+        return jsonify({"error": "Candidate not found"}), 404
+
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio file provided"}), 400
+
+    audio_file = request.files["audio"]
+    question_id = request.form.get("question_id")
+
+    if not question_id:
+        return jsonify({"error": "question_id required"}), 400
+
+    try:
+        question_id = int(question_id)
+    except ValueError:
+        return jsonify({"error": "Invalid question_id"}), 400
+
+    # Get the question for context
+    questions = candidate.get("interview_questions", [])
+    if question_id >= len(questions):
+        return jsonify({"error": "Question not found"}), 404
+
+    question = questions[question_id]["question"]
+
+    try:
+        # 1. Transcribe audio
+        audio_bytes = audio_file.read()
+        transcript = transcribe_audio(audio_bytes, "wav")
+
+        # 2. Analyze communication
+        metrics = analyze_communication(transcript, question)
+
+        # 3. Calculate overall score
+        communication_score = calculate_communication_score(metrics)
+
+        # 4. Save voice interview record
+        voice_interview = {
+            "candidate_id": cid,
+            "question_id": question_id,
+            "audio_path": f"voice_{cid}_{question_id}.wav",
+            "transcript": transcript,
+            "communication_score": communication_score,
+            "clarity_score": metrics.get("clarity", 0),
+            "confidence_score": metrics.get("confidence", 0),
+            "relevance_score": metrics.get("relevance", 0),
+            "speaking_pace_score": metrics.get("speaking_pace", 0),
+        }
+
+        result = save_voice_interview(voice_interview)
+
+        return jsonify({
+            "success": True,
+            "voice_interview": result,
+            "transcript": transcript,
+            "metrics": metrics,
+            "communication_score": communication_score,
+        }), 201
+
+    except Exception as e:
+        print(f"[VOICE] Error processing audio: {str(e)}")
+        return jsonify({"error": f"Voice processing failed: {str(e)}"}), 500
+
+
+@screen_bp.get("/api/candidates/<cid>/voice-interviews")
+def get_voice_profile(cid):
+    """Get all voice interview responses for a candidate"""
+
+    candidate = get_candidate(cid)
+    if not candidate:
+        return jsonify({"error": "Candidate not found"}), 404
+
+    voice_interviews = get_voice_interviews(cid)
+
+    # Calculate voice profile metrics
+    if voice_interviews:
+        avg_communication = sum(v.get("communication_score", 0) for v in voice_interviews) / len(voice_interviews)
+        avg_clarity = sum(v.get("clarity_score", 0) for v in voice_interviews) / len(voice_interviews)
+        avg_confidence = sum(v.get("confidence_score", 0) for v in voice_interviews) / len(voice_interviews)
+        avg_relevance = sum(v.get("relevance_score", 0) for v in voice_interviews) / len(voice_interviews)
+        avg_pace = sum(v.get("speaking_pace_score", 0) for v in voice_interviews) / len(voice_interviews)
+    else:
+        avg_communication = avg_clarity = avg_confidence = avg_relevance = avg_pace = 0
+
+    return jsonify({
+        "voice_interviews": voice_interviews,
+        "voice_profile": {
+            "communication_score": int(avg_communication),
+            "clarity": int(avg_clarity),
+            "confidence": int(avg_confidence),
+            "relevance": int(avg_relevance),
+            "speaking_pace": int(avg_pace),
+        }
+    })

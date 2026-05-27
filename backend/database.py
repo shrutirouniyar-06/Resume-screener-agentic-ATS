@@ -65,6 +65,24 @@ def init_db():
         )
     """)
 
+    # Voice interviews table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS voice_interviews (
+            id TEXT PRIMARY KEY,
+            candidate_id TEXT NOT NULL,
+            question_id INTEGER NOT NULL,
+            audio_path TEXT NOT NULL,
+            transcript TEXT,
+            communication_score INTEGER,
+            clarity_score INTEGER,
+            confidence_score INTEGER,
+            relevance_score INTEGER,
+            speaking_pace_score INTEGER,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (candidate_id) REFERENCES candidates(id)
+        )
+    """)
+
     conn.commit()
     conn.close()
 

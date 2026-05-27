@@ -7,6 +7,7 @@ import {
   Radar,
   ResponsiveContainer,
 } from "recharts";
+import VoiceRecorder from "../../components/interview/VoiceRecorder";
 import "./InterviewPage.css";
 
 export default function InterviewPage() {
@@ -15,6 +16,8 @@ export default function InterviewPage() {
   const [candidate, setCandidate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [ratings, setRatings] = useState({});
+  const [activeTab, setActiveTab] = useState("text");
+  const [voiceInterviews, setVoiceInterviews] = useState({});
 
   useEffect(() => {
     load();
@@ -41,6 +44,24 @@ export default function InterviewPage() {
       );
 
       setRatings(saved);
+
+      // LOAD VOICE INTERVIEWS
+
+      try {
+        const voiceRes = await fetch(
+          `http://localhost:5000/api/candidates/${id}/voice-interviews`
+        );
+        if (voiceRes.ok) {
+          const voiceData = await voiceRes.json();
+          const voiceMap = {};
+          voiceData.voice_interviews.forEach((vi) => {
+            voiceMap[vi.question_id] = vi;
+          });
+          setVoiceInterviews(voiceMap);
+        }
+      } catch (e) {
+        console.log("No voice interviews yet");
+      }
     } finally {
       setLoading(false);
     }
@@ -88,11 +109,26 @@ export default function InterviewPage() {
         </div>
       </div>
 
+      <div className="interview-tabs">
+        <button
+          className={`tab-btn ${activeTab === "text" ? "active" : ""}`}
+          onClick={() => setActiveTab("text")}
+        >
+          Interview
+        </button>
+        <button
+          className={`tab-btn voice-tab ${activeTab === "voice" ? "active" : ""}`}
+          onClick={() => setActiveTab("voice")}
+        >
+          <span className="voice-icon">🎤</span> Voice Interview
+        </button>
+      </div>
+
       <div className="interview-layout">
         {/* LEFT */}
 
         <div className="interview-main">
-          {candidate.interview_questions?.map((q, i) => (
+          {activeTab === "text" && candidate.interview_questions?.map((q, i) => (
             <div key={i} className="question-card">
               <div className="question-type">{q.type}</div>
 
@@ -157,6 +193,41 @@ export default function InterviewPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          ))}
+
+          {activeTab === "voice" && candidate.interview_questions?.map((q, i) => (
+            <div key={i} className="question-card">
+              <div className="question-type">{q.type}</div>
+
+              <div className="question-text">{q.question}</div>
+
+              {q.follow_up && (
+                <div className="question-followup">↳ {q.follow_up}</div>
+              )}
+
+              <div className="competency-row">
+                {q.competencies?.map((c) => (
+                  <span key={c} className="competency-chip">
+                    {c.replaceAll("_", " ")}
+                  </span>
+                ))}
+              </div>
+
+              {voiceInterviews[i] ? (
+                <div className="voice-response-existing">
+                  <div className="response-badge">✓ Recorded</div>
+                  <div className="response-score">
+                    Score: <strong>{voiceInterviews[i].communication_score}</strong>
+                  </div>
+                </div>
+              ) : (
+                <VoiceRecorder
+                  questionIndex={i}
+                  candidateId={id}
+                  onComplete={() => load()}
+                />
+              )}
             </div>
           ))}
         </div>

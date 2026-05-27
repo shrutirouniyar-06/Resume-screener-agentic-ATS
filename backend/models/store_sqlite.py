@@ -201,6 +201,65 @@ def get_candidate(cid: str) -> dict | None:
         return candidate
     return None
 
+# ==================== VOICE INTERVIEW CRUD ====================
+
+def save_voice_interview(voice_data: dict) -> dict:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    voice_id = voice_data.get("id") or new_id()
+    now = now_iso()
+
+    cursor.execute("""
+        INSERT OR REPLACE INTO voice_interviews
+        (id, candidate_id, question_id, audio_path, transcript, communication_score,
+         clarity_score, confidence_score, relevance_score, speaking_pace_score, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        voice_id,
+        voice_data["candidate_id"],
+        voice_data["question_id"],
+        voice_data.get("audio_path"),
+        voice_data.get("transcript"),
+        voice_data.get("communication_score"),
+        voice_data.get("clarity_score"),
+        voice_data.get("confidence_score"),
+        voice_data.get("relevance_score"),
+        voice_data.get("speaking_pace_score"),
+        now
+    ))
+
+    conn.commit()
+    conn.close()
+
+    voice_data["id"] = voice_id
+    voice_data["created_at"] = now
+    return voice_data
+
+def get_voice_interviews(candidate_id: str) -> list:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT * FROM voice_interviews
+        WHERE candidate_id = ?
+        ORDER BY created_at DESC
+    """, (candidate_id,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [dict(row) for row in rows] if rows else []
+
+def get_voice_interview(voice_id: str) -> dict | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM voice_interviews WHERE id = ?", (voice_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    return dict(row) if row else None
+
 # ==================== SEEDING ====================
 
 def seed_demo():

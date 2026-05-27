@@ -1,0 +1,281 @@
+.voice-recorder {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+/* Recording Controls */
+.recorder-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.record-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #185fa5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.record-btn:hover:not(:disabled) {
+  background: #1451a0;
+  transform: translateY(-1px);
+}
+
+.record-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.record-btn.recording {
+  background: #d32f2f;
+  animation: pulse-btn 1.5s infinite;
+}
+
+.record-icon {
+  font-size: 16px;
+}
+
+@keyframes pulse-btn {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(211, 47, 47, 0);
+  }
+}
+
+.recording-time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #d32f2f;
+}
+
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  background: #d32f2f;
+  border-radius: 50%;
+  animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.loader {
+  padding: 12px 20px;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 6px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Score Display */
+.score-display {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.score-main {
+  display: flex;
+  gap: 16px;
+}
+
+.communication-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #185fa5 0%, #1451a0 100%);
+  border-radius: 12px;
+  color: white;
+  text-align: center;
+}
+
+.score-number {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.score-label {
+  font-size: 12px;
+  margin-top: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Transcript Section */
+.transcript-section {
+  margin: 20px 0;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+}
+
+.transcript-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Metrics Section */
+.metrics-section {
+  margin: 20px 0;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.metric-card {
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.metric-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.metric-bar {
+  width: 100%;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.metric-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #185fa5 0%, #1976d2 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.metric-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #185fa5;
+  text-align: right;
+}
+
+.analysis-note {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f0f7ff;
+  border-left: 3px solid #185fa5;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.5;
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: #185fa5;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #1451a0;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+  border: 1px solid #ddd;
+  margin-top: 12px;
+}
+
+.btn-secondary:hover {
+  background: #e8e8e8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .communication-badge {
+    width: 100px;
+    height: 100px;
+  }
+
+  .score-number {
+    font-size: 36px;
+  }
+
+  .recorder-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .record-btn {
+    justify-content: center;
+  }
+}
