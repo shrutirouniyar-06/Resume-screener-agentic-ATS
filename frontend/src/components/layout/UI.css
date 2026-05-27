@@ -88,21 +88,17 @@
 
 .metric-label {
   font-size: 13px;
-  color: #1a1a1a;
+  color: #000000 !important;
+  background: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
   margin-bottom: 10px;
   text-transform: capitalize;
   letter-spacing: 0.3px;
   font-weight: 600;
   display: block;
   line-height: 1.4;
-}
-
-[data-theme='dark'] .metric-label {
-  color: #f5f5f5 !important;
-}
-
-.metric-card .metric-label {
-  color: inherit;
+  width: fit-content;
 }
 
 .metric-value {
