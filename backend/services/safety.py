@@ -453,7 +453,8 @@ def run_comprehensive_safety_checks(
         report["all_passed"] = False
 
     # 4. Check for hallucination
-    skills_claim = f"Found skills: {', '.join(llm_output.get('skills_found', []))}"
+    skills_list = llm_output.get('skills_found', []) if isinstance(llm_output.get('skills_found'), list) else []
+    skills_claim = f"Found skills: {', '.join(str(s) for s in skills_list)}" if skills_list else "No skills found"
     is_hallucinated, hallucin_reason = detect_hallucination(skills_claim, resume_text)
     grounded, ungrounded = check_grounding(str(llm_output), resume_text)
 
