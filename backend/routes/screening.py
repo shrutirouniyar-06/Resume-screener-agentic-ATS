@@ -14,6 +14,12 @@ from services.llm import (
     judge_and_revise,
 )
 from services.speech import transcribe_audio, analyze_communication, calculate_communication_score
+from services.safety import (
+    detect_prompt_injection,
+    run_comprehensive_safety_checks,
+    filter_toxic_output,
+    audit_log,
+)
 import os
 
 screen_bp = Blueprint("screen", __name__)
@@ -157,6 +163,14 @@ def screen_resume():
 
         resume_text = extract_text(raw_bytes, file.filename)
 
+        # SAFETY: Detect prompt injection attempts
+        is_injection, pattern = detect_prompt_injection(resume_text)
+        if is_injection:
+            return jsonify({
+                "error": f"Suspicious content detected in resume: {pattern}",
+                "code": "INJECTION_DETECTED"
+            }), 400
+
         # PII scrubbing
 
         safe_resume_text = scrub_pii(resume_text)
@@ -182,7 +196,20 @@ def screen_resume():
         return jsonify({"error": f"LLM analysis failed: {e}"}), 500
 
     # -------------------------
-    # 3. Score
+    # 3. Safety Validation
+    # -------------------------
+
+    # Run comprehensive safety checks
+    safety_report = run_comprehensive_safety_checks(
+        analysis, safe_resume_text, analysis
+    )
+
+    # If critical safety issues, flag for review
+    if not safety_report["all_passed"]:
+        print(f"\n⚠️ SAFETY CHECKS FAILED:\n{safety_report}")
+
+    # -------------------------
+    # 4. Score
     # -------------------------
 
     score_breakdown = calculate_score(analysis, role)
@@ -278,9 +305,13 @@ def screen_resume():
 
             if reviewed_reason:
 
+                # SAFETY: Filter for toxicity and bias in rejection feedback
+                filtered_reason = filter_toxic_output(reviewed_reason)
+                filtered_improvements = [filter_toxic_output(s) for s in reviewed_improvements]
+
                 rejection_feedback = {
-                    "reason": reviewed_reason,
-                    "improvement_suggestions": reviewed_improvements,
+                    "reason": filtered_reason,
+                    "improvement_suggestions": filtered_improvements,
                 }
 
             else:
@@ -327,6 +358,20 @@ def screen_resume():
             "rejection_feedback": rejection_feedback,
         }
     )
+
+    # SAFETY: Log decision for audit trail
+    audit_log.log_decision(
+        candidate_id=candidate.get("id"),
+        role_id=role_id,
+        decision="shortlisted" if shortlisted else "rejected",
+        score=score_breakdown.get("overall", 0),
+        reason=recruiter_summary if shortlisted else (rejection_feedback.get("reason") if rejection_feedback else "No feedback"),
+        analysis=analysis,
+        safety_checks=safety_report["checks"]
+    )
+
+    # Add safety report to response
+    candidate["safety_checks"] = safety_report
 
     return jsonify(candidate), 201
 
@@ -494,3 +539,50 @@ def get_voice_profile(cid):
             "speaking_pace": int(avg_pace),
         }
     })
+
+
+# ============================================================================
+# AI SAFETY & AUDIT ENDPOINTS
+# ============================================================================
+
+@screen_bp.get("/api/audit-trail")
+def get_audit_trail():
+    """Get complete audit trail of all screening decisions for compliance."""
+    return jsonify({
+        "audit_entries": audit_log.get_audit_trail(),
+        "total_entries": len(audit_log.logs)
+    })
+
+
+@screen_bp.get("/api/audit-report")
+def get_audit_report():
+    """Get audit report summary for compliance reporting."""
+    role_id = request.args.get("role_id")
+    report = audit_log.get_audit_report(role_id)
+    return jsonify(report)
+
+
+@screen_bp.post("/api/safety-check")
+def run_safety_check():
+    """Manually run safety checks on a candidate decision."""
+    data = request.get_json()
+    candidate_id = data.get("candidate_id")
+
+    candidate = get_candidate(candidate_id)
+    if not candidate:
+        return jsonify({"error": "Candidate not found"}), 404
+
+    analysis = candidate.get("analysis", {})
+    rejection_reason = ""
+    if candidate.get("status") == "Rejected":
+        feedback = candidate.get("rejection_feedback", {})
+        rejection_reason = feedback.get("reason", "")
+
+    safety_report = run_comprehensive_safety_checks(
+        analysis,
+        "",  # No resume text in this context
+        analysis,
+        rejection_reason
+    )
+
+    return jsonify(safety_report)

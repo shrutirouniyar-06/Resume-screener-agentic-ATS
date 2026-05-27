@@ -11,3 +11,7 @@ transformers
 torch
 librosa
 soundfile
+better-profanity
+presidio-analyzer
+presidio-anonymizer
+pydantic
