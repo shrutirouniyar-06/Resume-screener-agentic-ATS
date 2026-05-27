@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models.store import get_role, save_candidate, get_all_candidates, get_candidate
+from models.store_sqlite import get_role, save_candidate, get_all_candidates, get_candidate
 from services.parser import extract_text
 from services.scoring import calculate_score
 from services.privacy import scrub_pii
