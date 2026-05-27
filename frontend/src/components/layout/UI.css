@@ -126,26 +126,27 @@ button.btn:disabled { opacity: 0.5; cursor: not-allowed; } */
 }
 
 .metric-label {
-  font-size: 11px;
-  color: var(--light-text);
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 13px;
+  color: var(--text-color);
+  margin-bottom: 10px;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
   font-weight: 600;
+  opacity: 0.9;
 }
 
 .metric-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-color);
+  font-size: 32px;
+  font-weight: 800;
+  color: #185FA5;
   line-height: 1;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .metric-delta {
   font-size: 12px;
-  margin-top: 4px;
-  color: var(--muted-text);
+  margin-top: 6px;
+  color: var(--text-color);
   font-weight: 500;
 }
 
